@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+import pandas as pd
+import os
 import asyncio
 import websockets
 import socket
+import json
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -26,22 +29,33 @@ print(
     "* Select the sensors to stream.\n"
     "* Update the 'update interval' by entering a value in ms.".format(IPAddr))
 
-# TODO format into csv
 async def echo(websocket, path):
+    print("echo")
     async for message in websocket:
         if path == '/accelerometer':
-            data = await websocket.recv()
-            print(data)
-            f = open("accelerometer.txt", "a")
-            f.write(data+"\n")
+            acc_data = await websocket.recv()
+            acc_json = json.loads(acc_data)
+
+            # for csv
+            acc_values = acc_json.values()
+            data_df = pd.DataFrame([list(acc_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
+            fpath = "raw_data/accelerometer/acc_test.csv"
+            data_df.to_csv(fpath, mode='a', header=not os.path.exists(path))
+            print("Acc Data Appended")
 
         elif path == '/gyroscope':
-            data = await websocket.recv()
-            print(data)
-            f = open("gyroscope.txt", "a")
-            f.write(data+"\n")
+            gyro_data = await websocket.recv()
+            gyro_json = json.loads(gyro_data)
+
+            # for csv
+            gyro_values = gyro_json.values()
+            data_df = pd.DataFrame([list(gyro_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
+            fpath = "raw_data/gyroscope/gyro_test.csv"
+            data_df.to_csv(fpath, mode='a', header=not os.path.exists(path))
+            print("Gyro Data Appended")
 
         else:
+            print("pass", path)
             pass
 
 asyncio.get_event_loop().run_until_complete(
