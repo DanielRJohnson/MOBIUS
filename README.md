@@ -1,1 +1,4 @@
-# GyroLogger
+# GyroLogger (WIP)
+Final project for EECS 700: Mobile Security
+Brief: Side channel Android keystroke inference from gyroscope and accelerometer data
+Authors: Daniel Johnson and Dawson Rooney
