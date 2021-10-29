@@ -5,7 +5,7 @@ import asyncio
 import websockets
 import socket
 import json
-from time import gmtime, strftime
+import time
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -29,12 +29,13 @@ print(
     "* Press the 'Set IP Address' button.\n"
     "* Select the sensors to stream.\n"
     "* Update the 'update interval' by entering a value in ms.".format(IPAddr))
-reading_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+reading_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 
 async def echo(websocket, path):
     async for message in websocket:
         if path == '/accelerometer':
             acc_data = await websocket.recv()
+            now = time.time()
             acc_json = json.loads(acc_data)
 
             # for csv
@@ -42,10 +43,11 @@ async def echo(websocket, path):
             data_df = pd.DataFrame([list(acc_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
             fpath = "raw_data/accelerometer/acc_" + reading_time + ".csv"
             data_df.to_csv(fpath, mode='a', header=not os.path.exists(fpath))
-            print("Acc Data Appended")
+            print("Acc Data Appended in", (time.time() - now) / 1000, "milliseconds")
 
         elif path == '/gyroscope':
             gyro_data = await websocket.recv()
+            now = time.time()
             gyro_json = json.loads(gyro_data)
 
             # for csv
@@ -53,7 +55,7 @@ async def echo(websocket, path):
             data_df = pd.DataFrame([list(gyro_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
             fpath = "raw_data/gyroscope/gyro_" + reading_time + ".csv"
             data_df.to_csv(fpath, mode='a', header=not os.path.exists(fpath))
-            print("Gyro Data Appended")
+            print("Gyro Data Appended", (time.time() - now) / 1000, "milliseconds")
 
         else:
             pass
