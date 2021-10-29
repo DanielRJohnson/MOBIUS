@@ -43,7 +43,7 @@ async def echo(websocket, path):
             data_df = pd.DataFrame([list(acc_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
             fpath = "raw_data/accelerometer/acc_" + reading_time + ".csv"
             data_df.to_csv(fpath, mode='a', header=not os.path.exists(fpath))
-            print("Acc Data Appended in", (time.time() - now) / 1000, "milliseconds")
+            print("Acc Data Appended in", (time.time() - now) * 1000, "milliseconds")
 
         elif path == '/gyroscope':
             gyro_data = await websocket.recv()
@@ -55,7 +55,7 @@ async def echo(websocket, path):
             data_df = pd.DataFrame([list(gyro_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
             fpath = "raw_data/gyroscope/gyro_" + reading_time + ".csv"
             data_df.to_csv(fpath, mode='a', header=not os.path.exists(fpath))
-            print("Gyro Data Appended", (time.time() - now) / 1000, "milliseconds")
+            print("Gyro Data Appended", (time.time() - now) * 1000, "milliseconds")
 
         else:
             pass
