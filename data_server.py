@@ -31,35 +31,54 @@ print(
     "* Update the 'update interval' by entering a value in ms.".format(IPAddr))
 reading_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 
+acc_fpath = "raw_data/accelerometer/acc_" + reading_time + ".csv"
+complete_acc_df = pd.DataFrame()
+
+gyro_fpath = "raw_data/gyroscope/gyro_" + reading_time + ".csv"
+complete_gyro_df = pd.DataFrame()
+
+gyro = False
+accel = False
 async def echo(websocket, path):
+    global gyro
+    global accel
+    global complete_acc_df
+    global complete_gyro_df
     async for message in websocket:
         if path == '/accelerometer':
-            acc_data = await websocket.recv()
-            now = time.time()
-            acc_json = json.loads(acc_data)
+            accel = True
+            if gyro:     
+                now = time.time()
+                acc_json = json.loads(message)
 
-            # for csv
-            acc_values = acc_json.values()
-            data_df = pd.DataFrame([list(acc_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
-            fpath = "raw_data/accelerometer/acc_" + reading_time + ".csv"
-            data_df.to_csv(fpath, mode='a', header=not os.path.exists(fpath))
-            print("Acc Data Appended in", (time.time() - now) * 1000, "milliseconds")
+                assert (acc_json["SensorName"] == "Accelerometer"), "RECEIVED GYROSCOPE MESSAGE WITH ACCELEROMETER PATH"
+
+                acc_values = acc_json.values()
+                data_df = pd.DataFrame([list(acc_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
+                complete_acc_df = pd.concat([complete_acc_df, data_df])
+                print("Acc Data Appended in", (time.time() - now) * 1000, "milliseconds")
 
         elif path == '/gyroscope':
-            gyro_data = await websocket.recv()
-            now = time.time()
-            gyro_json = json.loads(gyro_data)
+            gyro = True
+            if accel:
+                now = time.time()
+                gyro_json = json.loads(message)
 
-            # for csv
-            gyro_values = gyro_json.values()
-            data_df = pd.DataFrame([list(gyro_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
-            fpath = "raw_data/gyroscope/gyro_" + reading_time + ".csv"
-            data_df.to_csv(fpath, mode='a', header=not os.path.exists(fpath))
-            print("Gyro Data Appended", (time.time() - now) * 1000, "milliseconds")
+                assert (gyro_json["SensorName"] == "Gyroscope"), "RECEIVED ACCELEROMETER MESSAGE WITH GYROSCOPE PATH"
 
+                gyro_values = gyro_json.values()
+                data_df = pd.DataFrame([list(gyro_values)], columns=["SensorName", "Timestamp", "x", "y", "z", "payload"])
+                complete_gyro_df = pd.concat([complete_gyro_df, data_df])
+                print("Gyro Data Appended", (time.time() - now) * 1000, "milliseconds")
         else:
             pass
 
-asyncio.get_event_loop().run_until_complete(
-    websockets.serve(echo, '0.0.0.0', 5000, max_size=1_000_000_000))
-asyncio.get_event_loop().run_forever()
+try:
+    asyncio.get_event_loop().run_until_complete(
+        websockets.serve(echo, '0.0.0.0', 5000, max_size=1_000_000_000))
+    asyncio.get_event_loop().run_forever()
+except KeyboardInterrupt:
+    complete_acc_df.to_csv(acc_fpath, index=None)
+    complete_gyro_df.to_csv(gyro_fpath, index=None)
+    print("\nWrote Dataframes to /raw_data/")
+    exit()
