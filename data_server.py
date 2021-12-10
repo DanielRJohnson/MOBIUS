@@ -31,10 +31,10 @@ print(
     "* Update the 'update interval' by entering a value in ms.".format(IPAddr))
 reading_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 
-acc_fpath = "raw_data/accelerometer/acc_" + reading_time + ".csv"
+acc_fpath = "raw_data/Saccelerometer/acc_" + reading_time + ".csv"
 complete_acc_df = pd.DataFrame()
 
-gyro_fpath = "raw_data/gyroscope/gyro_" + reading_time + ".csv"
+gyro_fpath = "raw_data/Sgyroscope/gyro_" + reading_time + ".csv"
 complete_gyro_df = pd.DataFrame()
 
 gyro = False
